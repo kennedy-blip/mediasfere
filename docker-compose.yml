@@ -1,0 +1,24 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: ./apps/api
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MEDIASPHERE_CORS_ORIGINS: '["http://localhost:3000"]'
+    ports: ["8000:8000"]
+    volumes: [media:/data]
+    depends_on: [redis]
+
+  worker:
+    build: ./apps/api
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    volumes: [media:/data]
+    depends_on: [redis]
+
+volumes:
+  media:
